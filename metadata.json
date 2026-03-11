@@ -1,0 +1,5 @@
+{
+  "name": "Universidade de Aveiro",
+  "description": "Aplicação oficial da Universidade de Aveiro para consulta de cursos, notícias, campus e investigação.",
+  "requestFramePermissions": ["geolocation"]
+}
