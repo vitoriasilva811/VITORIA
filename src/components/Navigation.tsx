@@ -40,7 +40,7 @@ export const BottomNav = ({ currentView, onNavigate }: { currentView: View, onNa
   <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 px-4 pb-6 pt-2 flex justify-around z-50">
     <NavItem icon={<Home size={24} />} label="Início" active={currentView === 'home'} onClick={() => onNavigate('home')} />
     <NavItem icon={<BookOpen size={24} />} label="Cursos" active={currentView === 'courses' || currentView === 'course-detail'} onClick={() => onNavigate('courses')} />
-    <NavItem icon={<FlaskConical size={24} />} label="I&D" active={currentView === 'research'} onClick={() => onNavigate('research')} />
+    <NavItem icon={<FlaskConical size={24} />} label="Investigação" active={currentView === 'research'} onClick={() => onNavigate('research')} />
     <NavItem icon={<MapPin size={24} />} label="Campus" active={currentView === 'campus'} onClick={() => onNavigate('campus')} />
     <NavItem icon={<Newspaper size={24} />} label="Notícias" active={currentView === 'news'} onClick={() => onNavigate('news')} />
     <NavItem icon={<User size={24} />} label="Admin" active={currentView === 'admin'} onClick={() => onNavigate('admin')} />

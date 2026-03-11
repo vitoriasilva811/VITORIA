@@ -36,7 +36,19 @@ export const AdminView = () => {
       setConfigMissing(false);
     } catch (err: any) {
       if (err.message.includes('Supabase URL and Anon Key are required')) {
-        setConfigMissing(true);
+        // Fallback to localStorage
+        const localData = localStorage.getItem('ua_mock_users');
+        if (localData) {
+          setUsers(JSON.parse(localData));
+        } else {
+          const initialUsers = [
+            { id: 1, name: 'Admin UA', email: 'admin@ua.pt', role: 'Administrador' },
+            { id: 2, name: 'João Silva', email: 'joao@ua.pt', role: 'Estudante' }
+          ];
+          setUsers(initialUsers);
+          localStorage.setItem('ua_mock_users', JSON.stringify(initialUsers));
+        }
+        setConfigMissing(true); // Still set to true to show the non-blocking warning
       } else {
         setError('Erro ao carregar utilizadores: ' + err.message);
       }
@@ -49,7 +61,25 @@ export const AdminView = () => {
     e.preventDefault();
     setError(null);
     try {
-      const supabase = getSupabase();
+      let supabase;
+      try {
+        supabase = getSupabase();
+      } catch (e) {
+        // Mock mode
+        const newUser = { ...formData, id: Date.now() };
+        let updatedUsers;
+        if (editingId) {
+          updatedUsers = users.map(u => u.id === editingId ? { ...u, ...formData } : u);
+        } else {
+          updatedUsers = [newUser, ...users];
+        }
+        setUsers(updatedUsers);
+        localStorage.setItem('ua_mock_users', JSON.stringify(updatedUsers));
+        setFormData({ name: '', email: '', role: 'Estudante' });
+        setEditingId(null);
+        return;
+      }
+
       if (editingId) {
         const { error } = await supabase
           .from('users')
@@ -78,7 +108,17 @@ export const AdminView = () => {
   const handleDelete = async (id: number) => {
     if (!confirm('Tem a certeza que deseja eliminar este utilizador?')) return;
     try {
-      const supabase = getSupabase();
+      let supabase;
+      try {
+        supabase = getSupabase();
+      } catch (e) {
+        // Mock mode
+        const updatedUsers = users.filter(u => u.id !== id);
+        setUsers(updatedUsers);
+        localStorage.setItem('ua_mock_users', JSON.stringify(updatedUsers));
+        return;
+      }
+
       const { error } = await supabase
         .from('users')
         .delete()
@@ -90,34 +130,7 @@ export const AdminView = () => {
     }
   };
 
-  if (configMissing) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center"
-      >
-        <div className="bg-amber-50 p-6 rounded-3xl border border-amber-100 mb-6">
-          <AlertCircle size={48} className="text-amber-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-amber-900 mb-2">Configuração Necessária</h2>
-          <p className="text-amber-700 text-sm leading-relaxed">
-            As credenciais do Supabase ainda não foram configuradas. 
-            Por favor, adicione as seguintes variáveis no menu <strong>Settings</strong>:
-          </p>
-          <div className="mt-4 space-y-2 text-left bg-white/50 p-4 rounded-xl text-xs font-mono text-amber-800 border border-amber-100">
-            <p>VITE_SUPABASE_URL</p>
-            <p>VITE_SUPABASE_ANON_KEY</p>
-          </div>
-        </div>
-        <button 
-          onClick={fetchUsers}
-          className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-slate-800 transition-colors"
-        >
-          <Settings size={20} /> Tentar Novamente
-        </button>
-      </motion.div>
-    );
-  }
+
 
 
   return (
@@ -126,6 +139,20 @@ export const AdminView = () => {
       animate={{ opacity: 1 }}
       className="flex flex-col pb-24 px-4 pt-8"
     >
+      {/* Config Warning (Non-blocking) */}
+      {configMissing && (
+        <div className="mb-8 bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-start gap-3">
+          <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={20} />
+          <div className="flex-grow">
+            <p className="text-amber-900 font-bold text-sm">Modo de Demonstração Ativo</p>
+            <p className="text-amber-700 text-xs leading-relaxed">
+              As credenciais do Supabase não foram configuradas. Os dados estão a ser guardados localmente no seu navegador.
+              Para persistência real, configure <strong>VITE_SUPABASE_URL</strong> e <strong>VITE_SUPABASE_ANON_KEY</strong> nas definições.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 mb-8">
         <div className="bg-primary text-white p-2 rounded-lg">
           <User size={24} />
